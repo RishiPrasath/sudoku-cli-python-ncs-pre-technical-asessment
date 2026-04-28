@@ -46,7 +46,7 @@ venv\Scripts\activate
 pytest tests/ -v
 ```
 
-**70 tests across 7 test files — all passing.**
+**77 tests across 8 test files — all passing.**
 
 ---
 
@@ -70,20 +70,21 @@ CommandExampleDescriptionPlace a number`A3 4`Place value 4 at row A, column 3Cle
 
 ### Architecture
 
-The game is built around 8 classes, each with a single responsibility:
+The game is built around 9 classes, each with a single responsibility:
 
 - **Cell** — represents one square on the board. Owns its value and pre-filled status. Enforces all placement rules (value must be 1–9, pre-filled cells are immutable).
 - **Grid** — holds 81 Cell objects in a 9×9 structure. Provides access by row letter and column number. Translates between the player's coordinate system (A–I, 1–9) and internal list indexes.
 - **BoardRenderer** — reads the Grid and prints the board to the terminal in the spec format.
 - **Validator** — checks the Grid for rule violations. Scans rows, then columns, then 3×3 subgrids. Returns the first violation found, or None if the board is clean.
 - **InputParser** — parses raw text typed by the player into a structured command dictionary. Returns None for any unrecognised or malformed input.
+- **PuzzleGenerator** — generates a random, valid Sudoku puzzle on each run. Uses a backtracking algorithm to produce a complete solution, then carves cells to create a puzzle with a unique solution (~30 clues).
 - **HintEngine** — scans the attempt grid for the first empty cell and returns the correct value from the solution grid.
 - **Game** — orchestrates the game loop. Receives a parsed command and delegates to the correct class. Checks the win condition after every valid placement.
 - [**main.py**](http://main.py) — entry point. Creates all objects and starts the game.
 
 ### Assumptions
 
-- The puzzle and solution are hardcoded constants as specified. No puzzle generation is required.
+- A new puzzle is randomly generated each time the game starts. The generator produces a complete valid solution, then removes cells while ensuring the puzzle has exactly one solution.
 - The solution grid is created once at startup and never modified. Only the attempt grid changes.
 - The hint command always reveals the first empty cell in row-major order (A1 → A2 → ... → I9).
 - The check command reports the first violation found — row violations take priority over column violations, which take priority over subgrid violations.
@@ -106,24 +107,24 @@ All classes were built using Test-Driven Development (TDD) — tests were writte
 
 ```
 code/
-├── main.py                    # Entry point
-├── requirements.txt           # pytest dependency
-├── constants/
-│   └── puzzle_data.py         # PUZZLE and SOLUTION constants
+├── main.py                        # Entry point
+├── requirements.txt               # pytest dependency
 ├── sudoku/
-│   ├── cell.py                # One square on the board
-│   ├── grid.py                # 9×9 board of Cell objects
-│   ├── board_renderer.py      # Prints the board to terminal
-│   ├── validator.py           # Checks rows, columns, subgrids
-│   ├── input_parser.py        # Parses raw player input
-│   ├── hint_engine.py         # Reveals correct value for first empty cell
-│   └── game.py                # Game loop and command orchestration
+│   ├── cell.py                    # One square on the board
+│   ├── grid.py                    # 9×9 board of Cell objects
+│   ├── board_renderer.py          # Prints the board to terminal
+│   ├── validator.py               # Checks rows, columns, subgrids
+│   ├── input_parser.py            # Parses raw player input
+│   ├── hint_engine.py             # Reveals correct value for first empty cell
+│   ├── puzzle_generator.py        # Generates random puzzles with unique solutions
+│   └── game.py                    # Game loop and command orchestration
 └── tests/
-    ├── test_cell.py           # 10 tests
-    ├── test_grid.py           # 16 tests
-    ├── test_board_renderer.py # 4 tests
-    ├── test_validator.py      # 9 tests
-    ├── test_input_parser.py   # 16 tests
-    ├── test_hint_engine.py    # 4 tests
-    └── test_game.py           # 11 tests
+    ├── test_cell.py               # 10 tests
+    ├── test_grid.py               # 16 tests
+    ├── test_board_renderer.py     # 4 tests
+    ├── test_validator.py          # 9 tests
+    ├── test_input_parser.py       # 16 tests
+    ├── test_hint_engine.py        # 4 tests
+    ├── test_puzzle_generator.py   # 7 tests
+    └── test_game.py               # 11 tests
 ```
